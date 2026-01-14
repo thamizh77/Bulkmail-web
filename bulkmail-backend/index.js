@@ -5,24 +5,22 @@ require("dotenv").config();
 
 const app = express();
 
+// -------------------- MIDDLEWARE --------------------
 app.use(cors());
 app.use(express.json());
 
-// ✅ EXPLICIT SMTP CONFIG (IMPORTANT)
+// -------------------- NODEMAILER (GMAIL SMTP) --------------------
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 587,              // 🔑 MUST
-  secure: false,          // 🔑 MUST (true only for 465)
+  port: 587,              // ✅ Correct
+  secure: false,          // ✅ MUST be false for 587
   auth: {
     user: process.env.EMAIL,
     pass: process.env.EMAIL_PASS,
   },
-  tls: {
-    rejectUnauthorized: false,
-  },
 });
 
-// Verify once at startup
+// Verify transporter (Render logs-la paaka)
 transporter.verify((err) => {
   if (err) {
     console.error("❌ Transporter error:", err);
@@ -31,6 +29,7 @@ transporter.verify((err) => {
   }
 });
 
+// -------------------- API --------------------
 app.post("/sendemail", async (req, res) => {
   const { msg, emailList } = req.body;
 
@@ -51,20 +50,21 @@ app.post("/sendemail", async (req, res) => {
       });
     }
 
-    res.json({
+    return res.status(200).json({
       success: true,
       message: "Emails sent successfully",
     });
   } catch (err) {
-    console.error("❌ Send error:", err);
-    res.status(500).json({
+    console.error("❌ Email send error:", err.message);
+
+    return res.status(500).json({
       success: false,
       message: "Email sending failed",
     });
   }
 });
 
-// 🔥 IMPORTANT: Render PORT
+// -------------------- SERVER --------------------
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
