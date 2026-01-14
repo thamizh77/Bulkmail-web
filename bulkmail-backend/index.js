@@ -18,10 +18,10 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Verify transporter
+// Verify transporter (optional but useful)
 transporter.verify((error, success) => {
   if (error) {
-    console.log("❌ Transporter error:", error);
+    console.error("❌ Transporter error:", error);
   } else {
     console.log("✅ Transporter ready to send emails");
   }
@@ -40,7 +40,6 @@ app.post("/sendemail", async (req, res) => {
   }
 
   try {
-    // Send mail to each recipient
     for (let i = 0; i < emailList.length; i++) {
       await transporter.sendMail({
         from: process.env.EMAIL,
@@ -63,8 +62,9 @@ app.post("/sendemail", async (req, res) => {
   }
 });
 
-// -------------------- SERVER --------------------
-const PORT = 4000;
+// -------------------- SERVER (IMPORTANT FOR RENDER) --------------------
+const PORT = process.env.PORT || 4000;
+
 app.listen(PORT, () => {
-  console.log(`🚀 Server Started on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
