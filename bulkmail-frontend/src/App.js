@@ -7,6 +7,8 @@ function App() {
   const [status, setstatus] = useState(false);
   const [emailList, setemailList] = useState([]);
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   function handlemsg(e) {
     setmsg(e.target.value);
   }
@@ -37,7 +39,7 @@ function App() {
     setstatus(true);
 
     axios
-      .post("http://localhost:4000/sendemail", {
+      .post(`${API_URL}/sendemail`, {
         msg,
         emailList,
       })
