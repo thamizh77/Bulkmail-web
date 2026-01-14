@@ -5,66 +5,67 @@ require("dotenv").config();
 
 const app = express();
 
-// -------------------- MIDDLEWARE --------------------
 app.use(cors());
 app.use(express.json());
 
-// -------------------- NODEMAILER SETUP --------------------
+// ✅ EXPLICIT SMTP CONFIG (IMPORTANT)
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,              // 🔑 MUST
+  secure: false,          // 🔑 MUST (true only for 465)
   auth: {
     user: process.env.EMAIL,
     pass: process.env.EMAIL_PASS,
   },
+  tls: {
+    rejectUnauthorized: false,
+  },
 });
 
-// Verify transporter (optional but useful)
-transporter.verify((error, success) => {
-  if (error) {
-    console.error("❌ Transporter error:", error);
+// Verify once at startup
+transporter.verify((err) => {
+  if (err) {
+    console.error("❌ Transporter error:", err);
   } else {
-    console.log("✅ Transporter ready to send emails");
+    console.log("✅ Transporter ready");
   }
 });
 
-// -------------------- API ROUTE --------------------
 app.post("/sendemail", async (req, res) => {
   const { msg, emailList } = req.body;
 
-  // Validation
   if (!msg || !emailList || emailList.length === 0) {
     return res.status(400).json({
       success: false,
-      message: "Message or email list is missing",
+      message: "Message or email list missing",
     });
   }
 
   try {
-    for (let i = 0; i < emailList.length; i++) {
+    for (const email of emailList) {
       await transporter.sendMail({
-        from: process.env.EMAIL,
-        to: emailList[i],
-        subject: "A message from Bulk Mail App",
+        from: `"Bulk Mail App" <${process.env.EMAIL}>`,
+        to: email,
+        subject: "Bulk Mail Test",
         text: msg,
       });
     }
 
-    return res.status(200).json({
+    res.json({
       success: true,
       message: "Emails sent successfully",
     });
-  } catch (error) {
-    console.error("❌ Email sending failed:", error);
-    return res.status(500).json({
+  } catch (err) {
+    console.error("❌ Send error:", err);
+    res.status(500).json({
       success: false,
       message: "Email sending failed",
     });
   }
 });
 
-// -------------------- SERVER (IMPORTANT FOR RENDER) --------------------
-const PORT = process.env.PORT || 4000;
-
+// 🔥 IMPORTANT: Render PORT
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
